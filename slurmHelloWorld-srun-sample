@@ -1,0 +1,37 @@
+#!/bin/sh
+#SBATCH --partition=debug
+#SBATCH --time=00:15:00
+#SBATCH --nodes=2
+#SBATCH --ntasks-per-node=1
+#SBATCH --constraint=CPU-L5520
+#SBATCH --job-name="mpi_test"
+#SBATCH --output=mpi.out
+#SBATCH --mail-user=rgudipat@buffalo.edu
+#SBATCH --mail-type=ALL
+##SBATCH --requeue
+#Specifies that the job will be requeued after a node failure.
+#The default is that the job will not be requeued.
+
+echo "SLURM_JOB_ID="$SLURM_JOB_ID
+echo "SLURM_JOB_NODELIST"=$SLURM_JOB_NODELIST
+echo "SLURM_NNODES"=$SLURM_NNODES
+echo "SLURMTMPDIR="$SLURMTMPDIR
+
+cd $SLURM_SUBMIT_DIR
+echo "working directory = "$SLURM_SUBMIT_DIR
+
+
+module load intel/13.0
+module load intel-mpi/4.1.0
+module list
+ulimit -s unlimited
+#
+
+echo "Launch test3 written by ravikanth"
+NPROCS=`srun --nodes=${SLURM_NNODES} bash -c 'hostname' |wc -l`
+echo NPROCS=$NPROCS
+export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
+srun -n $NPROCS python example.py
+
+#
+echo "All Done!"
