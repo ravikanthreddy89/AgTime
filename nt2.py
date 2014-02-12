@@ -72,7 +72,24 @@ class server(threading.Thread):
 
 def recv(data):
 	lock.acquire();
+	global time_stamp;
+	t_message=data;
+	t_stamp= {'pClock':0, 'lClock':0,'count':0};
 	
+	#recv part of algorithm starts from here
+	t_stamp['lClock']=max(time_stamp['lClock'],t_message['lClock'],time_stamp['pClock']);
+	if(t_stamp['lClock']==t_message['lClock'] and t_stamp['lClock']==time_stamp['lClock']):
+		t_stamp['count']=max(time_stamp['count'],t_message['count'])+1;
+	elif (t_stamp['lClock']==time_stamp['lClock']):
+		t_stamp['count']=time_stamp['count']+1;
+	elif(t_stamp['lClock']==t_message['lClock']):
+		t_stamp['count']=t_message['count']+1;
+	else:
+		t_stamp['count']=0;
+
+	time_stamp['lClock']=t_stamp['lClock'];
+	time_stamp['pClock']=t_stamp['pClock'];
+	time_stamp['count']=t_stamp['count'];
 	print data;
 	lock.release();
 
@@ -94,7 +111,7 @@ def send(data,portno):
 	time_stamp['pClock']=t_stamp['pClock'];
 	time_stamp['count']=t_stamp['count'];
 	client_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM);
-	client_socket.connect(("pollux.cse.buffalo.edu",portno));
+	client_socket.connect(("localhost",portno));
 	client_socket.send(pickle.dumps(t_stamp));
 	client_socket.close();
 	lock.release();
