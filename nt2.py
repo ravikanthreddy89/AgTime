@@ -1,9 +1,12 @@
 from socket import AF_INET, SOCK_DGRAM
-import sys
-import socket
-import select
+import sys;
+import socket;
+import select;
 import thread;
-import struct, time, threading;
+import pickle;
+import struct;
+import time;
+import threading;
 
 
 class AgTime:
@@ -58,7 +61,7 @@ class server(threading.Thread):
 					print "Message rxd from (%s %s)",addr
 				else:
 					try:
-						data=sock.recv(self.RECV_BUFFER);
+						data=pickle.loads(sock.recv(self.RECV_BUFFER));
 						if data:
 							thread.start_new_thread(recv,(data,));
 					except:
@@ -90,7 +93,7 @@ def send(data,portno):
 	time_stamp.count=t_stamp.count;
 	client_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM);
 	client_socket.connect(("localhost",portno));
-	client_socket.send(data);
+	client_socket.send(pickle.dumps(data));
 	client_socket.close();
 	lock.release();
 
