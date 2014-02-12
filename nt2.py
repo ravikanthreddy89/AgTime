@@ -72,28 +72,30 @@ class server(threading.Thread):
 
 def recv(data):
 	lock.acquire();
+	
 	print data;
 	lock.release();
 
 
 def send(data,portno):
 	lock.acquire();
-	t_stamp=AgTime();
-	t_stamp.lClock=max(time_stamp.lClock,time_stamp.pClock);
-	if(t_stamp.lClock==time_stamp.lClock):
-		time_stamp.count=time_stamp.count+1;
+	global time_stamp;
+	t_stamp={'pClock':0, 'lClock':0,'count':0};
+	t_stamp['lClock']=max(time_stamp['lClock'],time_stamp['pClock']);
+	if(t_stamp['lClock']==time_stamp['lClock']):
+		time_stamp['count']=time_stamp['count']+1;
 	else:
-		time_stamp.count=0;
-	t_stamp.pClock=time_stamp.pClock;
-	t_stamp.count=time_stamp.count;
+		time_stamp['count']=0;
+	t_stamp['pClock']=time_stamp['pClock'];
+	t_stamp['count']=time_stamp['count'];
 
 	#update the time_stamp object to hold the event timestamp
-	time_stamp.lClock=t_stamp.lClock;
-	time_stamp.pClock=t_stamp.pClock;
-	time_stamp.count=t_stamp.count;
+	time_stamp['lClock']=t_stamp['lClock'];
+	time_stamp['pClock']=t_stamp['pClock'];
+	time_stamp['count']=t_stamp['count'];
 	client_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM);
-	client_socket.connect(("localhost",portno));
-	client_socket.send(pickle.dumps(data));
+	client_socket.connect(("pollux.cse.buffalo.edu",portno));
+	client_socket.send(pickle.dumps(t_stamp));
 	client_socket.close();
 	lock.release();
 
@@ -105,9 +107,9 @@ if __name__ == "__main__":
         #create an ntp object
 	ntp=Ntp();
 	#create a time-stamp object
-	global time;
-	time_stamp=AgTime();
-	#launch a server thread
+	global time_stamp;
+	time_stamp= {'pClock':0, 'lClock':0,'count':0};
+        #launch a server thread
 	server_thread=server(int(sys.argv[1]));
 	server_thread.start();
 	while 1:
