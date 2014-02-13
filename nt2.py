@@ -8,36 +8,6 @@ import struct;
 import time;
 import threading;
 
-
-class AgTime:
-	lClock=0;
-	pClock=0;
-	count=0;
-
-#NTP client object that queries NTP server for time.
-class Ntp:
-	
-	def __init__(self):
-		# # Set the socket parameters 
-		self.host = "pool.ntp.org"
-		self.port = 123
-		self.buf = 1024
-		self.address = (self.host,self.port)
-		self.msg = '\x1b'+47*'\0'
-		# reference time (in seconds since 1900-01-01 00:00:00)
-		self.TIME1970 = 2208988800 # 1970-01-01 00:00:00
-
-	def time(self):
-		# connect to server
-		client = socket.socket( AF_INET, SOCK_DGRAM)
-		client.sendto(self.msg, self.address)
-		data, address = client.recvfrom( self.buf )
-
-		retval=struct.unpack("!12I",data);
-		t = retval[10]
-		t -= self.TIME1970
-		return t;
-
 class server(threading.Thread):
 	def __init__(self,portNo):
 		threading.Thread.__init__(self);
@@ -121,8 +91,6 @@ if __name__ == "__main__":
 	#create a global lock for mutual exclusion
 	global lock;
 	lock=threading.RLock();
-        #create an ntp object
-	ntp=Ntp();
 	#create a time-stamp object
 	global time_stamp;
 	time_stamp= {'pClock':0, 'lClock':0,'count':0};
@@ -130,7 +98,7 @@ if __name__ == "__main__":
 	server_thread=server(int(sys.argv[1]));
 	server_thread.start();
 	while 1:
-		data=raw_input("Enter some text to send");
+		data=raw_input("Entertext");
 		portno=raw_input("Enter portno");
 		if(data!="quit"):
 			thread.start_new_thread(send,(data,int(portno)));	
