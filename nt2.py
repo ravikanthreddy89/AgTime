@@ -8,6 +8,7 @@ import struct;
 import time;
 import threading;
 
+
 class server(threading.Thread):
 	def __init__(self,portNo):
 		threading.Thread.__init__(self);
@@ -42,6 +43,8 @@ class server(threading.Thread):
 
 def recv(data):
 	lock.acquire();
+	global recvCount;
+	recvCount=recvCount+1;
 	global time_stamp;
 	t_message=data;
 	t_stamp= {'pClock':0, 'lClock':0,'count':0};
@@ -64,8 +67,10 @@ def recv(data):
 	lock.release();
 
 
-def send(data,portno):
+def send(hostName,portno):
 	lock.acquire();
+	global sendCount;
+	sendCount=sendCount+1;
 	global time_stamp;
 	t_stamp={'pClock':0, 'lClock':0,'count':0};
 	t_stamp['lClock']=max(time_stamp['lClock'],time_stamp['pClock']);
@@ -81,27 +86,68 @@ def send(data,portno):
 	time_stamp['pClock']=t_stamp['pClock'];
 	time_stamp['count']=t_stamp['count'];
 	client_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM);
-	client_socket.connect(("localhost",portno));
+	client_socket.connect((hostName,portno));
 	client_socket.send(pickle.dumps(t_stamp));
 	client_socket.close();
 	lock.release();
 
 
 if __name__ == "__main__":
-	#create a global lock for mutual exclusion
+	#create a global lock for mutual exclusion or atomic events
 	global lock;
 	lock=threading.RLock();
 	#create a time-stamp object
 	global time_stamp;
 	time_stamp= {'pClock':0, 'lClock':0,'count':0};
-        #launch a server thread
-	server_thread=server(int(sys.argv[1]));
-	server_thread.start();
-	while 1:
-		data=raw_input("Entertext");
-		portno=raw_input("Enter portno");
-		if(data!="quit"):
-			thread.start_new_thread(send,(data,int(portno)));	
+	#get the localhost's ip/hostname
+	thisHost=socket.getfqdn();
+	print "Host name : ",thisHost,"Type of hostname :",type(thisHost);
+	#we don't need this right now.
+	localIP=socket.gethostbyname(thisHost);
+	hosts={};
+	#variables to keep track of event counts
+	global recvCount;
+        recvCount=0;
+        global sendCount;
+        sendCount=0;
+
+
+	#read the hosts file and save the list of hosts into a dict
+	try:
+		hostsFile=open(sys.argv[1]);
+	except IOError:
+		print "Error occured in trying to read the file"
+	except :
+		print "Error : Something went wrong while opening file"
+	count=0;
+	for line in hostsFile:
+		if(line.strip()== thisHost):
+			continue;
 		else:
-			break;
+			hosts[count]=line;
+			count=count+1;
+	
+	for keys in hosts:
+		print hosts[keys],"Type:",type(hosts[keys]);
+        #launch a server thread
+	server_thread=server(int(5000));
+	server_thread.start();
+
+	if(thisHost=="pollux.cse.buffalo.edu"):
+		# pollux is our playboy hitting at other hosts
+		thread.start_new_thread(send,("sol.cse.buffalo.edu",5000));
+		thread.start_new_thread(send,("silversun.cse.buffalo.edu",5000));
+		thread.start_new_thread(send,("sol.cse.buffalo.edu",5000));
+		thread.start_new_thread(send,("silversun.cse.buffalo.edu",5000));
+		thread.start_new_thread(send,("coldplay.cse.buffalo.edu",5000));
+		thread.start_new_thread(send,("coldplay.cse.buffalo.edu",5000));
+        else :
+		# other hosts listening for messages from playboy pollux
+		while 1:
+			data=raw_input("Enter \"quit\" to exit");
+			if(data=="quit"):
+				break;
+		print "Total number of messages rxd :", recvCount;
+		print "Total number of messages sent :", sendCount;
+		
         print "Exiting";
